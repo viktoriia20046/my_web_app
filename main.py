@@ -3,6 +3,7 @@ import socket
 import json
 import threading
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 
@@ -41,6 +42,13 @@ def run_flask():
 
 # Функція для запуску Socket сервера
 def run_socket_server():
+    if not os.path.exists('storage'):
+        os.makedirs('storage')
+    
+    if not os.path.exists('storage/data.json'):
+        with open('storage/data.json', 'w') as file:
+            json.dump({}, file)
+    
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(('127.0.0.1', 5000))
     print("Socket сервер працює на порту 5000...")
@@ -60,5 +68,11 @@ def run_socket_server():
             json.dump(json_data, file, indent=4)
 
 if __name__ == '__main__':
-    threading.Thread(target=run_flask).start()
-    threading.Thread(target=run_socket_server).start()
+    flask_thread = threading.Thread(target=run_flask)
+    socket_thread = threading.Thread(target=run_socket_server)
+    
+    flask_thread.start()
+    socket_thread.start()
+    
+    flask_thread.join()
+    socket_thread.join()
